@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUREUS | Operational Doctrine</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos específicos para documento de texto */
+        .doc-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        .doc-header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        .doc-title {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            color: var(--text);
+        }
+        .doc-subtitle {
+            font-family: var(--font-mono);
+            color: var(--gold);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .doc-item {
+            margin-bottom: 40px;
+        }
+        .doc-item h3 {
+            font-family: var(--font-heading);
+            color: var(--text);
+            margin-bottom: 10px;
+            border-left: 3px solid var(--gold);
+            padding-left: 15px;
+        }
+        .doc-item p, .doc-item li {
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+        .doc-item ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        .doc-item li::before {
+            content: ">> ";
+            color: var(--gold);
+        }
+        .disclaimer-box {
+            border: 1px solid #333;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            margin-top: 60px;
+        }
+        .disclaimer-text {
+            font-size: 0.75rem;
+            color: #666;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <header class="status-bar">
+        <div class="logo">AUREUS PROTOCOL <span class="version">[DOCS]</span></div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-item">< EXIT</a>
+        </div>
+    </header>
+
+    <!-- CONTENT -->
+    <section class="doc-container">
+        
+        <div class="doc-header">
+            <h1 class="doc-title">DOCTRINA OPERATIVA</h1>
+            <span class="doc-subtitle">Protocolos de ejecución y lógica algorítmica [v12]</span>
+        </div>
+
+        <div class="doc-item">
+            <h3>1. PROBABILIDAD SOBRE PREDICCIÓN</h3>
+            <p>Aureus no intenta adivinar el futuro. El sistema procesa miles de puntos de datos históricos para identificar escenarios donde la probabilidad matemática de éxito <strong>supera el umbral estricto</strong> definido por nuestros modelos. No operamos por noticias, operamos por estadística.</p>
+        </div>
+
+        <div class="doc-item">
+            <h3>2. EL SILENCIO ES ESTRATEGIA</h3>
+            <p>La mayoría de los operadores pierden capital por sobre-operar (Overtrading). Si el mercado no presenta una estructura clara, Aureus no emite señales.</p>
+            <p>Estar en liquidez (Cash) es una posición activa: protege el capital del ruido para desplegarlo solo cuando la ventaja es clara.</p>
+        </div>
+
+        <div class="doc-item">
+            <h3>3. HORIZONTE TEMPORAL DINÁMICO</h3>
+            <p>Nuestra operativa se adapta a la estructura del mercado. El algoritmo define la duración óptima de cada operación antes de entrar:</p>
+            <ul>
+                <li><strong>Intradía / Scalp (1 Día):</strong> Para movimientos de alta volatilidad inmediata.</li>
+                <li><strong>Swing (5 Días):</strong> Para capturar rotaciones semanales estándar.</li>
+                <li><strong>Tendencia (20 Días):</strong> Para movimientos estructurales a medio plazo.</li>
+            </ul>
+            <br>
+            <p><strong>Soberanía de Ejecución:</strong> El sistema sugiere mantener hasta cumplir el horizonte o tocar el Stop Loss. El usuario tiene libertad total para cerrar antes. Esto puede salvar capital en operaciones fallidas, pero estadísticamente conlleva el riesgo de perderse la tendencia principal y reducir la rentabilidad a largo plazo.</p>
+        </div>
+
+        <div class="doc-item">
+            <h3>4. GESTIÓN DE RIESGO</h3>
+            <p>El algoritmo integra un <strong>Stop Loss fijo del 7%</strong> en cada señal para evitar la ruina estadística. Esta pérdida se considera un coste operativo del sistema.</p>
+            <p>El usuario es libre de ajustar este porcentaje o ejecutar cortes manuales según su propia tolerancia al riesgo, entendiendo que cualquier desviación altera la esperanza matemática proyectada en nuestros modelos.</p>
+        </div>
+
+        <div class="doc-item">
+            <h3>5. EJECUCIÓN PRECISA</h3>
+            <p>El Alpha (rendimiento) generado en nuestras simulaciones asume una entrada en la apertura del mercado (Market on Open) tras la señal. La discrepancia en el precio de entrada o salida (Slippage) es una variable natural del mercado que debe ser considerada por el usuario.</p>
+        </div>
+
+        <div class="doc-item">
+            <h3>6. GESTIÓN DE LA INCERTIDUMBRE</h3>
+            <p>Los mercados financieros son entornos de información incompleta. Las rachas negativas (Drawdowns) son estadísticas inevitables. La eficacia del protocolo se evalúa en trimestres y años, no en el resultado de una operación individual.</p>
+        </div>
+
+        <div class="disclaimer-box">
+            <h3>7. NATURALEZA DEL SERVICIO</h3>
+            <p class="disclaimer-text">
+                <strong>Aureus Protocol es una herramienta de análisis de datos y software, no una entidad de asesoramiento financiero.</strong><br><br>
+                Las señales emitidas representan únicamente los resultados teóricos de nuestro algoritmo basados en datos pasados. El rendimiento histórico no garantiza resultados futuros. La decisión final de inversión, la gestión del apalancamiento y la responsabilidad sobre el capital recaen exclusivamente en el usuario. Al utilizar este protocolo, usted acepta que el trading conlleva riesgos significativos de pérdida de capital.
+            </p>
+        </div>
+
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>AUREUS PROTOCOL © 2024. ALGORITHMIC WEALTH INTELLIGENCE.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
