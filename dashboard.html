@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUREUS | Institutional Terminal</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Librerías JS -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="back-home">
+            <a href="index.html">< EXIT DATA ROOM</a>
+        </div>
+
+        <div class="sidebar-header">
+            AUREUS<br><span class="gold-text">DATA ROOM</span>
+        </div>
+        
+        <div class="scenario-selector">
+            <p class="label">SELECT FISCAL YEAR</p>
+            <div id="buttons-container"></div>
+        </div>
+
+        <div class="benchmark-control">
+            <label class="toggle-container">
+                <input type="checkbox" id="benchmarkToggle" onchange="toggleBenchmark()">
+                <span class="checkmark"></span>
+                COMPARE VS S&P 500
+            </label>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-content">
+        
+        <!-- KPIs HEADER (8 MÉTRICAS) -->
+        <div class="kpi-grid">
+            <!-- Fila 1: Rendimiento y Riesgo Macro -->
+            <div class="kpi-card">
+                <span class="kpi-label">TOTAL RETURN</span>
+                <span class="kpi-value gold-text" id="kpi-return">--%</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">MAX DRAWDOWN</span>
+                <span class="kpi-value warning-text" id="kpi-dd">--%</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">RECOVERY FACTOR</span>
+                <span class="kpi-value" id="kpi-recovery">--</span>
+                <span class="kpi-sub">Resilience Score</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">CAGR (Annualized)</span>
+                <span class="kpi-value" id="kpi-cagr">--%</span>
+            </div>
+
+            <!-- Fila 2: Calidad Operativa (Anti-Miedo) -->
+            <div class="kpi-card">
+                <span class="kpi-label">PROFIT FACTOR</span>
+                <span class="kpi-value gold-text" id="kpi-pf">--</span>
+                <span class="kpi-sub">Gross Win / Gross Loss</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">WIN RATE</span>
+                <span class="kpi-value" id="kpi-winrate">--%</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">AVG WIN / LOSS</span>
+                <span class="kpi-value" id="kpi-ratio">--</span>
+                <span class="kpi-sub">Payoff Ratio</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">TOTAL TRADES</span>
+                <span class="kpi-value" id="kpi-trades">--</span>
+            </div>
+        </div>
+
+        <!-- VISUALIZADOR DE VOLUMEN DE GANANCIAS (NUEVO) -->
+        <div class="pnl-visual-container">
+            <div class="pnl-header">
+                <span class="label">GROSS PROFIT DISTRIBUTION</span>
+                <span class="label mono" id="pnl-ratio-text">WINS vs LOSSES</span>
+            </div>
+            <div class="pnl-bar-wrapper">
+                <div id="pnl-bar-win" class="pnl-bar win-bar"></div>
+                <div id="pnl-bar-loss" class="pnl-bar loss-bar"></div>
+            </div>
+        </div>
+
+        <!-- GRAPH AREA -->
+        <div class="chart-section">
+            <div class="section-title">EQUITY CURVE PERFORMANCE</div>
+            <div id="mainChart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- TRADES TABLE -->
+        <div class="table-section">
+            <div class="section-title">TRADE LOG EXECUTION</div>
+            <div class="table-wrapper">
+                <table id="tradesTable">
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>TICKER</th>
+                            <th>TYPE</th>
+                            <th>PnL ($)</th>
+                            <th>REASON</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // === CONFIGURACIÓN ===
+        // Asegúrate de que los nombres coinciden con tus archivos en /data
+        const SCENARIOS = [
+            { id: '2020', label: '2020: THE V-SHAPE' },
+            { id: '2021', label: '2021: THE BULL RUN' },
+            { id: '2022', label: '2022: THE CRASH' }
+        ];
+        
+        let currentScenario = '2020';
+        let currentEquityData = [];
+        let currentBenchmarkData = [];
+        let myChart = echarts.init(document.getElementById('mainChart'));
+
+        // GENERAR BOTONES
+        const btnContainer = document.getElementById('buttons-container');
+        SCENARIOS.forEach(sc => {
+            const btn = document.createElement('button');
+            btn.className = 'scenario-btn';
+            btn.innerText = sc.label;
+            btn.onclick = () => loadScenario(sc.id);
+            if(sc.id === currentScenario) btn.classList.add('active');
+            btnContainer.appendChild(btn);
+        });
+
+        // CARGA DE DATOS
+        function loadScenario(year) {
+            currentScenario = year;
+            document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+            Array.from(document.querySelectorAll('.scenario-btn')).find(b => b.innerText.includes(year)).classList.add('active');
+
+            // Cargar Equity
+            Papa.parse(`data/${year}_equity.csv`, {
+                download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
+                complete: function(res) {
+                    currentEquityData = res.data;
+                    loadBenchmark(year);
+                },
+                error: function() { alert("No data found for " + year); }
+            });
+
+            // Cargar Trades
+            Papa.parse(`data/${year}_trades.csv`, {
+                download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
+                complete: function(res) {
+                    updateTable(res.data);
+                    calculateAdvancedStats(res.data); // Nuevas métricas
+                }
+            });
+        }
+
+        function loadBenchmark(year) {
+            Papa.parse(`data/${year}_benchmark.csv`, {
+                download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
+                complete: function(res) {
+                    currentBenchmarkData = res.data;
+                    renderChart();
+                    calculateBasicKPIs(currentEquityData);
+                },
+                error: function() {
+                    console.log("No benchmark data");
+                    currentBenchmarkData = [];
+                    renderChart();
+                    calculateBasicKPIs(currentEquityData);
+                }
+            });
+        }
+
+        function toggleBenchmark() { renderChart(); }
+
+        // CHART RENDER
+        function renderChart() {
+            if(!currentEquityData.length) return;
+            const dates = currentEquityData.map(row => row.Date);
+            const botValues = currentEquityData.map(row => row.Equity);
+            
+            const seriesList = [{
+                name: 'Aureus Protocol',
+                type: 'line',
+                data: botValues,
+                showSymbol: false,
+                itemStyle: { color: '#39FF14' },
+                lineStyle: { width: 2 },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(57, 255, 20, 0.2)' },
+                        { offset: 1, color: 'rgba(57, 255, 20, 0)' }
+                    ])
+                }
+            }];
+
+            if (document.getElementById('benchmarkToggle').checked && currentBenchmarkData.length > 0) {
+                const benchValues = currentBenchmarkData.map(row => row.Equity);
+                seriesList.push({
+                    name: 'S&P 500',
+                    type: 'line',
+                    data: benchValues,
+                    showSymbol: false,
+                    itemStyle: { color: '#666' },
+                    lineStyle: { width: 2, type: 'dashed' },
+                    z: 1
+                });
+            }
+
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: {
+                    trigger: 'axis', axisPointer: { type: 'cross' },
+                    backgroundColor: 'rgba(28, 28, 30, 0.95)', borderColor: '#333',
+                    textStyle: { color: '#E3E3DC', fontFamily: 'Space Mono' }
+                },
+                legend: { data: ['Aureus Protocol', 'S&P 500'], textStyle: { color: '#888' }, bottom: 0 },
+                grid: { left: '3%', right: '4%', bottom: '10%', top: '5%', containLabel: true },
+                xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: '#444' } }, axisLabel: { color: '#666' } },
+                yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: '#222' } }, axisLabel: { color: '#666' } },
+                series: seriesList
+            };
+            myChart.setOption(option, true);
+        }
+
+        // --- CÁLCULO DE MÉTRICAS AVANZADAS ---
+        function calculateBasicKPIs(data) {
+            if(!data.length) return;
+            const start = data[0].Equity;
+            const end = data[data.length-1].Equity;
+            const ret = ((end - start) / start) * 100;
+
+            let maxEquity = 0;
+            let maxDD = 0;
+            for(let row of data) {
+                if(row.Equity > maxEquity) maxEquity = row.Equity;
+                let dd = (row.Equity - maxEquity) / maxEquity;
+                if(dd < maxDD) maxDD = dd;
+            }
+            const maxDD_abs = Math.abs(maxDD);
+
+            // Recovery Factor: Return Total / Max DD
+            const recovery = maxDD_abs > 0 ? (ret / (maxDD_abs * 100)).toFixed(2) : "∞";
+
+            // CAGR Simple (Asumiendo 1 año de datos por CSV)
+            const cagr = ret.toFixed(2); 
+
+            document.getElementById('kpi-return').innerText = (ret > 0 ? '+' : '') + ret.toFixed(2) + '%';
+            document.getElementById('kpi-return').style.color = ret >= 0 ? '#39FF14' : '#FF4500';
+            document.getElementById('kpi-dd').innerText = (maxDD * 100).toFixed(2) + '%';
+            document.getElementById('kpi-recovery').innerText = recovery;
+            document.getElementById('kpi-cagr').innerText = cagr + "%";
+        }
+
+        function calculateAdvancedStats(trades) {
+            const closed = trades.filter(t => t.Type === 'SELL');
+            const total = closed.length;
+            
+            let grossWin = 0;
+            let grossLoss = 0;
+            let winCount = 0;
+
+            closed.forEach(t => {
+                if (t.PnL > 0) {
+                    grossWin += t.PnL;
+                    winCount++;
+                } else {
+                    grossLoss += Math.abs(t.PnL);
+                }
+            });
+
+            // 1. PROFIT FACTOR
+            let pf = grossLoss === 0 ? "∞" : (grossWin / grossLoss).toFixed(2);
+            
+            // 2. WIN RATE
+            let winRate = total > 0 ? ((winCount / total) * 100).toFixed(1) : 0;
+
+            // 3. AVG WIN / AVG LOSS
+            let avgWin = winCount > 0 ? grossWin / winCount : 0;
+            let avgLoss = (total - winCount) > 0 ? grossLoss / (total - winCount) : 0;
+            let payoff = avgLoss === 0 ? "∞" : (avgWin / avgLoss).toFixed(2);
+
+            // Actualizar DOM
+            document.getElementById('kpi-pf').innerText = pf;
+            document.getElementById('kpi-pf').style.color = pf >= 1.5 ? '#D4AF37' : (pf >= 1 ? '#E3E3DC' : '#FF4500');
+            
+            document.getElementById('kpi-winrate').innerText = winRate + '%';
+            document.getElementById('kpi-ratio').innerText = "1:" + payoff;
+            document.getElementById('kpi-trades').innerText = total;
+
+            // 4. ACTUALIZAR BARRA VISUAL (PNL BAR)
+            updatePnLBar(grossWin, grossLoss);
+        }
+
+        function updatePnLBar(win, loss) {
+            const total = win + loss;
+            if (total === 0) return;
+            
+            const winPct = (win / total) * 100;
+            const lossPct = (loss / total) * 100;
+
+            document.getElementById('pnl-bar-win').style.width = winPct + "%";
+            document.getElementById('pnl-bar-loss').style.width = lossPct + "%";
+            
+            // Texto descriptivo dinámico
+            document.getElementById('pnl-ratio-text').innerText = 
+                `GROSS WIN $${Math.round(win)} vs LOSS $${Math.round(loss)}`;
+        }
+
+        // TABLA
+        function updateTable(trades) {
+            const tbody = document.querySelector('#tradesTable tbody');
+            tbody.innerHTML = ''; 
+            trades.reverse().forEach(t => {
+                if(!t.Date) return;
+                const tr = document.createElement('tr');
+                const pnlClass = t.PnL > 0 ? 'win' : (t.PnL < 0 ? 'loss' : '');
+                const pnlSign = t.PnL > 0 ? '+' : '';
+                tr.innerHTML = `<td>${t.Date}</td><td class="bold">${t.Ticker}</td><td>${t.Type}</td><td class="${pnlClass}">${pnlSign}${t.PnL ? t.PnL.toFixed(2) : '0.00'}</td><td class="reason">${t.Reason || '-'}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.addEventListener('resize', () => myChart.resize());
+        loadScenario('2020'); 
+    </script>
+</body>
+</html>
